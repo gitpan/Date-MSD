@@ -5,7 +5,7 @@ BEGIN {
 		qw(msd_to_msd msd_to_jsn jsn_to_cmsd cmsdn_to_cmsdn);
 }
 
-use Math::BigRat 0.04;
+my $have_bigrat = eval("use Math::BigRat 0.04; 1");
 
 sub match($$) {
 	my($a, $b) = @_;
@@ -14,7 +14,7 @@ sub match($$) {
 
 my @prep = (
 	sub { $_[0] },
-	sub { Math::BigRat->new($_[0]) },
+	sub { $have_bigrat ? Math::BigRat->new($_[0]) : undef },
 );
 
 my %zoneful = (
@@ -39,9 +39,11 @@ sub check($$) {
 		my $sd = $dates->{$src};
 		my $dd = $dates->{$dst};
 		my @zone = $zoneful{$src} == $zoneful{$dst} ? () : ($zone);
-		foreach my $prep (@prep) {
+		foreach my $prep (@prep) { SKIP: {
 			my $psd = $prep->($sd);
 			my $pdd = $prep->($dd);
+			skip "numeric type unavailable", 8
+				unless defined($psd) && defined($pdd);
 			my $func = \&{"Date::MSD::${src}_to_${dst}"};
 			match $func->($psd, @zone), $pdd;
 			$func = \&{"Date::MSD::${src}_to_${dst}n"};
@@ -60,7 +62,7 @@ sub check($$) {
 			match $dn0, $dn1;
 			ok $dtod >= 0 && $dtod < 1;
 			match $dn1 + $dtod, $pdd;
-		}
+		} }
 	} }
 }
 

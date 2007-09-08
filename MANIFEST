@@ -1,4 +1,5 @@
 .cvsignore
+Build.PL
 Changes
 MANIFEST
 META.yml
@@ -6,3 +7,4 @@ Makefile.PL
 README
 lib/Date/MSD.pm
 t/d2d.t
+SIGNATURE    Added here by Module::Build

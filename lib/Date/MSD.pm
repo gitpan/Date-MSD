@@ -97,7 +97,7 @@ use strict;
 
 use Carp qw(croak);
 
-our $VERSION = "0.000";
+our $VERSION = "0.001";
 
 use base "Exporter";
 our @EXPORT_OK;
@@ -251,7 +251,7 @@ and defaults to zero.
 
 =cut
 
-eval {
+eval { local $SIG{__DIE__};
 	require POSIX;
 	*floor = \&POSIX::floor;
 };
