@@ -97,7 +97,7 @@ use strict;
 
 use Carp qw(croak);
 
-our $VERSION = "0.001";
+our $VERSION = "0.002";
 
 use base "Exporter";
 our @EXPORT_OK;
@@ -253,25 +253,25 @@ and defaults to zero.
 
 eval { local $SIG{__DIE__};
 	require POSIX;
-	*floor = \&POSIX::floor;
+	*_floor = \&POSIX::floor;
 };
 if($@ ne "") {
-	*floor = sub($) {
+	*_floor = sub($) {
 		my $i = int($_[0]);
 		return $i == $_[0] || $_[0] > 0 ? $i : $i - 1;
 	}
 }
 
-sub check_dn($$) {
+sub _check_dn($$) {
 	croak "purported day number $_[0] is not an integer"
 		unless ref($_[0]) ? $_[0]->is_int : $_[0] == int($_[0]);
 	croak "purported day fraction $_[1] is out of range [0, 1)"
 		unless $_[1] >= 0 && $_[1] < 1;
 }
 
-sub ret_dn($) {
+sub _ret_dn($) {
 	my $dn = ref($_[0]) eq "Math::BigRat" ?
-			$_[0]->copy->bfloor : floor($_[0]);
+			$_[0]->copy->bfloor : _floor($_[0]);
 	return wantarray ? ($dn, $_[0] - $dn) : $dn;
 }
 
@@ -294,11 +294,11 @@ foreach my $src (keys %msd_flavours) { foreach my $dst (keys %msd_flavours) {
 	eval "sub ${src}_to_${dst}(\$${zp}) { \$_[0] + (${ediff}) ${z1} }";
 	push @EXPORT_OK, "${src}_to_${dst}";
 	eval "sub ${src}_to_${dst}n(\$${zp}) {
-		ret_dn(\$_[0] + (${ediff}) ${z1})
+		_ret_dn(\$_[0] + (${ediff}) ${z1})
 	}";
 	push @EXPORT_OK, "${src}_to_${dst}n";
 	eval "sub ${src}n_to_${dst}(\$\$${zp}) {
-		check_dn(\$_[0], \$_[1]);
+		_check_dn(\$_[0], \$_[1]);
 		\$_[0] + \$_[1] + (${ediff}) ${z2}
 	}";
 	push @EXPORT_OK, "${src}n_to_${dst}";
@@ -310,8 +310,8 @@ foreach my $src (keys %msd_flavours) { foreach my $dst (keys %msd_flavours) {
 		$tp = $tc = "";
 	}
 	eval "sub ${src}n_to_${dst}n(\$${tp}\$${zp}) { $tc
-		check_dn(\$_[0], \$_[1]);
-		ret_dn(\$_[0] + \$_[1] + ($ediff) ${z2})
+		_check_dn(\$_[0], \$_[1]);
+		_ret_dn(\$_[0] + \$_[1] + ($ediff) ${z2})
 	}";
 	push @EXPORT_OK, "${src}n_to_${dst}n";
 } }
@@ -329,7 +329,9 @@ Andrew Main (Zefram) <zefram@fysh.org>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2007 Andrew Main (Zefram) <zefram@fysh.org>
+Copyright (C) 2007, 2009 Andrew Main (Zefram) <zefram@fysh.org>
+
+=head1 LICENSE
 
 This module is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

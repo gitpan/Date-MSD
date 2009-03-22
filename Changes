@@ -1,3 +1,16 @@
+version 0.002; 2009-03-22
+
+  * test POD syntax and coverage, and rename some internal functions to
+    satisfy the coverage test
+
+  * include "distribution_type" entry in META.yml to satisfy CPANTS
+
+  * in documentation, separate "license" section from "copyright" section
+
+  * use full stricture in Build.PL
+
+  * remove from .cvsignore items that don't occur with Module::Build
+
 version 0.001; 2007-09-08
 
   * bugfix: in initialisation, override any ambient $SIG{__DIE__}
