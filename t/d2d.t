@@ -1,3 +1,6 @@
+use warnings;
+use strict;
+
 use Test::More tests => 1 + 8*2*3*3*4;
 
 BEGIN {
@@ -89,3 +92,5 @@ check({
 	js => -205871,
 	cmsd => 200000.125,
 }, 0.125);
+
+1;

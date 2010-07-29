@@ -1,3 +1,17 @@
+version 0.003; 2010-07-29
+
+  * use simpler "parent" pragma in place of "base"
+
+  * check for required Perl version at runtime
+
+  * use full stricture in test suite
+
+  * in Build.PL, explicitly declare configure-time requirements
+
+  * remove bogus "exit 0" from Build.PL
+
+  * add MYMETA.yml to .cvsignore
+
 version 0.002; 2009-03-22
 
   * test POD syntax and coverage, and rename some internal functions to
