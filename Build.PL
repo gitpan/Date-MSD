@@ -29,7 +29,7 @@ Module::Build->new(
 		"warnings" => 0,
 	},
 	conflicts => {
-		"Math::BigRat" => "< 0.04",
+		"Math::BigRat" => "< 0.13",
 	},
 	dynamic_config => 0,
 	meta_add => { distribution_type => "module" },

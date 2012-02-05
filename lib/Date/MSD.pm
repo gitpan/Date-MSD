@@ -4,13 +4,13 @@ Date::MSD - conversion between flavours of Mars Sol Date
 
 =head1 SYNOPSIS
 
-	use Date::MSD qw(js_to_msd msd_to_cmsdn cmsdn_to_js);
+	use Date::MSD qw(js_to_msd msd_to_cmsdnf cmsdn_to_js);
 
 	$msd = js_to_msd($js);
-	($cmsdn, $cmsdf) = msd_to_cmsdn($msd, $tz);
+	($cmsdn, $cmsdf) = msd_to_cmsdnf($msd, $tz);
 	$js = cmsdn_to_js($cmsdn, $cmsdf, $tz);
 
-	# and 33 other conversion functions
+	# and 69 other conversion functions
 
 =head1 DESCRIPTION
 
@@ -38,9 +38,13 @@ named "XYZ" which is a real count of days since a particular epoch (an
 integer plus a fraction) and a corresponding quantity named "XYZN" ("XYZ
 Number") which is a count of complete days since the same epoch.  XYZN is
 the integral part of XYZ.  There is also a quantity named "XYZF" ("XYZ
-Fraction") which is a count of fractional days since the XYZN changed.
-XYZF is the fractional part of XYZ, in the range [0, 1).  This quantity
-naming pattern is derived from the naming of Terran day counts.
+Fraction") which is a count of fractional days since the XYZN changed
+(at midnight).  XYZF is the fractional part of XYZ, in the range [0, 1).
+
+This quantity naming pattern is derived from the naming of Terran day
+counts, particularly JD (Julian Date) and JDN (Julian Day Number) which
+have the described correspondence.  The "XYZF" name type is a neologism,
+invented for L<Date::JD>.
 
 All calendar dates given are in the Darian calendar for Mars.  An hour
 number is appended to each date, separated by a "T"; hour 00 is midnight
@@ -98,7 +102,7 @@ use strict;
 
 use Carp qw(croak);
 
-our $VERSION = "0.003";
+our $VERSION = "0.004";
 
 use parent "Exporter";
 our @EXPORT_OK;
@@ -121,7 +125,7 @@ The use of C<Math::BigRat> is recommended to avoid these problems.
 With C<Math::BigRat> the results are exact.
 
 There are conversion functions between all pairs of day count systems.
-This is a total of 36 conversion functions (including 6 identity
+This is a total of 72 conversion functions (including 12 identity
 functions).
 
 When converting between timezone-relative counts (CMSD) and absolute
@@ -154,10 +158,59 @@ between CMSD and CMSDN).
 
 =item cmsd_to_cmsd(CMSD)
 
-Conversions between fractional day counts principally involve a change
-of epoch.  The input identifies a point in time, as a fractional day
-count of input flavour.  The function returns the same point in time,
-represented as a fractional day count of output flavour.
+These functions convert from one continuous day count to another.
+This principally involve a change of epoch.  The input identifies a
+point in time, as a continuous day count of input flavour.  The function
+returns the same point in time, represented as a continuous day count
+of output flavour.
+
+=item msd_to_msdnn(MSD)
+
+=item msd_to_jsnn(MSD)
+
+=item msd_to_cmsdnn(MSD, ZONE)
+
+=item js_to_msdnn(JS)
+
+=item js_to_jsnn(JS)
+
+=item js_to_cmsdnn(JS, ZONE)
+
+=item cmsd_to_msdnn(CMSD, ZONE)
+
+=item cmsd_to_jsnn(CMSD, ZONE)
+
+=item cmsd_to_cmsdnn(CMSD)
+
+These functions convert from a continuous day count to an integral day
+count.  The input identifies a point in time, as a continuous day count
+of input flavour.  The function returns the day number of output flavour
+that applies at that instant.  The process throws away information about
+the time of (output-flavour) day.
+
+=item msd_to_msdnf(MSD)
+
+=item msd_to_jsnf(MSD)
+
+=item msd_to_cmsdnf(MSD, ZONE)
+
+=item js_to_msdnf(JS)
+
+=item js_to_jsnf(JS)
+
+=item js_to_cmsdnf(JS, ZONE)
+
+=item cmsd_to_msdnf(CMSD, ZONE)
+
+=item cmsd_to_jsnf(CMSD, ZONE)
+
+=item cmsd_to_cmsdnf(CMSD)
+
+These functions convert from a continuous day count to an integral day
+count with separate fraction.  The input identifies a point in time,
+as a continuous day count of input flavour.  The function returns a
+list of two items: the day number and fractional day of output flavour,
+which together identify the same point in time as the input.
 
 =item msd_to_msdn(MSD)
 
@@ -177,13 +230,19 @@ represented as a fractional day count of output flavour.
 
 =item cmsd_to_cmsdn(CMSD)
 
-These conversion functions go from a fractional count to an integral
-count.  The input identifies a point in time, as a fractional day count of
-input flavour.  The function determines the day number of output flavour
-that applies at that instant.  In scalar context only this integral day
-number is returned.  In list context a list of two values is returned:
-the integral day number and the day fraction in the range [0, 1).
-The day fraction, representing the time of day, is relative to midnight.
+These functions convert from a continuous day count to an integral day
+count, possibly with separate fraction.  The input identifies a point in
+time, as a continuous day count of input flavour.  If called in scalar
+context, the function returns the day number of output flavour that
+applies at that instant, throwing away information about the time of
+(output-flavour) day.  If called in list context, the function returns a
+list of two items: the day number and fractional day of output flavour,
+which together identify the same point in time as the input.
+
+These functions are not recommended, because the context-sensitive
+return convention makes their use error-prone.  They are retained for
+backward compatibility.  You should prefer to use the more specific
+functions shown above.
 
 =item msdn_to_msd(MSDN, MSDF)
 
@@ -203,12 +262,63 @@ The day fraction, representing the time of day, is relative to midnight.
 
 =item cmsdn_to_cmsd(CMSDN, CMSDF)
 
-These conversion functions go from an integral count to a fractional
-count.  The input identifies a point in time, as an integral day number of
-input flavour plus day fraction in the range [0, 1).  The day fraction,
-representing the time of day, is relative to midnight.  The identified
-point in time is returned in the form of a fractional day number of
-output flavour.
+These functions convert from an integral day count with separate fraction
+to a continuous day count.  The input identifies a point in time, as
+an integral day number of input flavour plus day fraction in the range
+[0, 1).  The function returns the same point in time, represented as a
+continuous day count of output flavour.
+
+=item msdn_to_msdnn(MSDN[, MSDF])
+
+=item msdn_to_jsnn(MSDN[, MSDF])
+
+=item msdn_to_cmsdnn(MSDN, MSDF, ZONE)
+
+=item jsn_to_msdnn(JSN[, JSF])
+
+=item jsn_to_jsnn(JSN[, JSF])
+
+=item jsn_to_cmsdnn(JSN, JSF, ZONE)
+
+=item cmsdn_to_msdnn(CMSDN, CMSDF, ZONE)
+
+=item cmsdn_to_jsnn(CMSDN, CMSDF, ZONE)
+
+=item cmsdn_to_cmsdnn(CMSDN[, CMSDF])
+
+These functions convert from an integral day count with separate fraction
+to an integral day count.  The input identifies a point in time, as an
+integral day number of input flavour plus day fraction in the range
+[0, 1).  The function returns the day number of output flavour that
+applies at that instant.  The process throws away information about
+the time of (output-flavour) day.  If converting between systems that
+delimit days identically (e.g., between JS and MSD), the day fraction
+makes no difference and may be omitted from the input.
+
+=item msdn_to_msdnf(MSDN, MSDF)
+
+=item msdn_to_jsnf(MSDN, MSDF)
+
+=item msdn_to_cmsdnf(MSDN, MSDF, ZONE)
+
+=item jsn_to_msdnf(JSN, JSF)
+
+=item jsn_to_jsnf(JSN, JSF)
+
+=item jsn_to_cmsdnf(JSN, JSF, ZONE)
+
+=item cmsdn_to_msdnf(CMSDN, CMSDF, ZONE)
+
+=item cmsdn_to_jsnf(CMSDN, CMSDF, ZONE)
+
+=item cmsdn_to_cmsdnf(CMSDN, CMSDF)
+
+These functions convert from one integral day count with separate
+fraction to another.  The input identifies a point in time, as an
+integral day number of input flavour plus day fraction in the range
+[0, 1).  The function returns a list of two items: the day number and
+fractional day of output flavour, which together identify the same point
+in time as the input.
 
 =item msdn_to_msdn(MSDN[, MSDF])
 
@@ -228,27 +338,26 @@ output flavour.
 
 =item cmsdn_to_cmsdn(CMSDN[, CMSDF])
 
-These conversion functions go from an integral count to another integral
-count.  They can be used either to convert only a day number or to convert
-a point in time using integer-plus-fraction form.  The output convention
-is identical to that for C<msd_to_msdn> et al, including the variation
-depending on calling context.
+These functions convert from an integral day count with separate fraction
+to an integral day count, possibly with separate fraction.  The input
+identifies a point in time, as an integral day number of input flavour
+plus day fraction in the range [0, 1).  If called in scalar context, the
+function returns the day number of output flavour that applies at that
+instant, throwing away information about the time of (output-flavour) day.
+If called in list context, the function returns a list of two items:
+the day number and fractional day of output flavour, which together
+identify the same point in time as the input.
 
-If converting a point in time, the input identifies it as an integral
-day number of input flavour plus day fraction in the range [0, 1).
-The day fraction, representing the time of day, is relative to midnight.
-The same point in time is (in list context) returned as a list of integral
-day number of output flavour and the day fraction in the range [0, 1).
+If converting between systems that delimit days identically (e.g.,
+between JS and MSD), the day fraction makes no difference to the integral
+day number of the output, and may be omitted from the input.  If the day
+fraction is extracted from the output when it wasn't supplied as input,
+it will default to zero.
 
-If it is desired only to convert integral day numbers, it is still
-necessary to consider time of day, because in the general case the days
-are delimited differently by the input and output day count flavours.
-A day fraction must be specified if there is such a difference, and
-the conversion is calculated for the point in time thus identified.
-To perform a conversion for a large part of the day, give a representative
-time of day within it.  If converting between systems that delimit days
-identically (e.g., between MSD and JS), the day fraction is optional
-and defaults to zero.
+These functions are not recommended, because the context-sensitive
+return convention makes their use error-prone.  They are retained for
+backward compatibility.  You should prefer to use the more specific
+functions shown above.
 
 =cut
 
@@ -270,17 +379,25 @@ sub _check_dn($$) {
 		unless $_[1] >= 0 && $_[1] < 1;
 }
 
-sub _ret_dn($) {
+sub _ret_dnn($) {
 	my $dn = ref($_[0]) eq "Math::BigRat" ?
 			$_[0]->copy->bfloor : _floor($_[0]);
-	return wantarray ? ($dn, $_[0] - $dn) : $dn;
+	return $dn;
+}
+
+sub _ret_dnf($) {
+	my $dn = &_ret_dnn;
+	return ($dn, $_[0] - $dn);
+}
+
+sub _ret_dn($) {
+	return wantarray ? &_ret_dnf : &_ret_dnn;
 }
 
 foreach my $src (keys %msd_flavours) { foreach my $dst (keys %msd_flavours) {
 	my $ediff = $msd_flavours{$src}->{epoch_msd} -
 			$msd_flavours{$dst}->{epoch_msd};
 	my $ediffh = $ediff == int($ediff) ? 0 : 0.5;
-	my $ediffi = $ediff - $ediffh;
 	my $src_zone = !!$msd_flavours{$src}->{zone};
 	my $dst_zone = !!$msd_flavours{$dst}->{zone};
 	my($zp, $z1, $z2);
@@ -294,6 +411,14 @@ foreach my $src (keys %msd_flavours) { foreach my $dst (keys %msd_flavours) {
 	}
 	eval "sub ${src}_to_${dst}(\$${zp}) { \$_[0] + (${ediff}) ${z1} }";
 	push @EXPORT_OK, "${src}_to_${dst}";
+	eval "sub ${src}_to_${dst}nn(\$${zp}) {
+		_ret_dnn(\$_[0] + (${ediff}) ${z1})
+	}";
+	push @EXPORT_OK, "${src}_to_${dst}nn";
+	eval "sub ${src}_to_${dst}nf(\$${zp}) {
+		_ret_dnf(\$_[0] + (${ediff}) ${z1})
+	}";
+	push @EXPORT_OK, "${src}_to_${dst}nf";
 	eval "sub ${src}_to_${dst}n(\$${zp}) {
 		_ret_dn(\$_[0] + (${ediff}) ${z1})
 	}";
@@ -310,6 +435,16 @@ foreach my $src (keys %msd_flavours) { foreach my $dst (keys %msd_flavours) {
 	} else {
 		$tp = $tc = "";
 	}
+	eval "sub ${src}n_to_${dst}nn(\$${tp}\$${zp}) { $tc
+		_check_dn(\$_[0], \$_[1]);
+		_ret_dnn(\$_[0] + \$_[1] + ($ediff) ${z2})
+	}";
+	push @EXPORT_OK, "${src}n_to_${dst}nn";
+	eval "sub ${src}n_to_${dst}nf(\$\$${zp}) {
+		_check_dn(\$_[0], \$_[1]);
+		_ret_dnf(\$_[0] + \$_[1] + ($ediff) ${z2})
+	}";
+	push @EXPORT_OK, "${src}n_to_${dst}nf";
 	eval "sub ${src}n_to_${dst}n(\$${tp}\$${zp}) { $tc
 		_check_dn(\$_[0], \$_[1]);
 		_ret_dn(\$_[0] + \$_[1] + ($ediff) ${z2})
@@ -330,7 +465,8 @@ Andrew Main (Zefram) <zefram@fysh.org>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2007, 2009, 2010 Andrew Main (Zefram) <zefram@fysh.org>
+Copyright (C) 2007, 2009, 2010, 2012
+Andrew Main (Zefram) <zefram@fysh.org>
 
 =head1 LICENSE
 

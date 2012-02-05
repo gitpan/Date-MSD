@@ -1,14 +1,14 @@
 use warnings;
 use strict;
 
-use Test::More tests => 1 + 8*2*3*3*4;
+use Test::More tests => 1 + 26*2*3*3*4;
 
 BEGIN {
 	use_ok "Date::MSD",
-		qw(msd_to_msd msd_to_jsn jsn_to_cmsd cmsdn_to_cmsdn);
+		qw(msd_to_msd msd_to_jsnf jsn_to_cmsd cmsdn_to_cmsdn);
 }
 
-my $have_bigrat = eval("use Math::BigRat 0.04; 1");
+my $have_bigrat = eval("use Math::BigRat 0.13; 1");
 
 sub match($$) {
 	my($a, $b) = @_;
@@ -45,26 +45,59 @@ sub check($$) {
 		foreach my $prep (@prep) { SKIP: {
 			my $psd = $prep->($sd);
 			my $pdd = $prep->($dd);
-			skip "numeric type unavailable", 8
+			skip "numeric type unavailable", 26
 				unless defined($psd) && defined($pdd);
 			my $func = \&{"Date::MSD::${src}_to_${dst}"};
-			match $func->($psd, @zone), $pdd;
-			$func = \&{"Date::MSD::${src}_to_${dst}n"};
-			my $dn0 = $func->($psd, @zone);
-			my($dn1, $dtod) = $func->($psd, @zone);
-			match $dn0, $dn1;
+			my $r = $func->($psd, @zone);
+			match $r, $pdd;
+			my @r = $func->($psd, @zone);
+			is scalar(@r), 1;
+			match $r[0], $pdd;
+			$func = \&{"Date::MSD::${src}_to_${dst}nn"};
+			my $dn = $func->($psd, @zone);
+			@r = $func->($psd, @zone);
+			is scalar(@r), 1;
+			match $r[0], $dn;
+			$func = \&{"Date::MSD::${src}_to_${dst}nf"};
+			@r = $func->($psd, @zone);
+			is scalar(@r), 2;
+			my $dtod = $r[1];
+			match $r[0], $dn;
 			ok $dtod >= 0 && $dtod < 1;
-			match $dn1 + $dtod, $pdd;
+			match $dn + $dtod, $pdd;
+			$func = \&{"Date::MSD::${src}_to_${dst}n"};
+			$r = $func->($psd, @zone);
+			match $r, $dn;
+			@r = $func->($psd, @zone);
+			is scalar(@r), 2;
+			match $r[0], $dn;
+			match $r[1], $dtod;
 			$func = \&{"Date::MSD::${src}n_to_${dst}"};
 			my $psdn = flr($psd);
 			my $stod = $psd - $psdn;
-			match $func->($psdn, $stod, @zone), $pdd;
+			$r = $func->($psdn, $stod, @zone);
+			match $r, $pdd;
+			@r = $func->($psdn, $stod, @zone);
+			is scalar(@r), 1;
+			match $r[0], $pdd;
+			$func = \&{"Date::MSD::${src}n_to_${dst}nn"};
+			$r = $func->($psdn, $stod, @zone);
+			match $r, $dn;
+			@r = $func->($psdn, $stod, @zone);
+			is scalar(@r), 1;
+			match $r[0], $dn;
+			$func = \&{"Date::MSD::${src}n_to_${dst}nf"};
+			@r = $func->($psdn, $stod, @zone);
+			is scalar(@r), 2;
+			match $r[0], $dn;
+			match $r[1], $dtod;
 			$func = \&{"Date::MSD::${src}n_to_${dst}n"};
-			$dn0 = $func->($psdn, $stod, @zone);
-			($dn1, $dtod) = $func->($psdn, $stod, @zone);
-			match $dn0, $dn1;
-			ok $dtod >= 0 && $dtod < 1;
-			match $dn1 + $dtod, $pdd;
+			$r = $func->($psdn, $stod, @zone);
+			match $r, $dn;
+			@r = $func->($psdn, $stod, @zone);
+			is scalar(@r), 2;
+			match $r[0], $dn;
+			match $r[1], $dtod;
 		} }
 	} }
 }
